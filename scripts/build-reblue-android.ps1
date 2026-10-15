@@ -47,5 +47,15 @@ cmake -S $src -B $bin -G Ninja `
 if ($LASTEXITCODE) { exit $LASTEXITCODE }
 if ($ConfigureOnly) { exit 0 }
 
+# generated/sources.cmake only exists once codegen has run, and the configure
+# that lacks it leaves the recompiled sources and their include dir out. A
+# fresh tree generates first and then configures again.
+if (-not (Test-Path (Join-Path $src 'generated\sources.cmake'))) {
+    cmake --build $bin --target reblue_codegen
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+    cmake $bin
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+}
+
 cmake --build $bin --target reblue
 exit $LASTEXITCODE
