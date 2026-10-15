@@ -22,7 +22,7 @@ New-Item -ItemType Directory -Force $out | Out-Null
 $configure = "cmake -S `"$src`" -B `"$bin`" -G Ninja -DCMAKE_BUILD_TYPE=Release " +
     "-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl " +
     "`"-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc /DREBLUE_RECOMP /utf-8`" " +
-    "-DXENOS_RECOMP_DXIL=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+    "-DXENOS_RECOMP_DXIL=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 cmd /c "call `"$vcvars`" >nul && $configure && cmake --build `"$bin`" --target XenosRecomp"
 if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
