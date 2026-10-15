@@ -1,0 +1,4 @@
+// Same Android Gradle Plugin as SDL3's own android-project template.
+plugins {
+    id 'com.android.application' version '8.7.3' apply false
+}

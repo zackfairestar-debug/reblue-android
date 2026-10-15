@@ -1,0 +1,9 @@
+# Their own repositories, on their android-port branches.
+/reblue/
+/rexglue-sdk/
+
+# Build outputs and downloaded host tools.
+/build/
+/host-tools/
+*.log
+__pycache__/
