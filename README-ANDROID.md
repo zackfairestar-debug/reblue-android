@@ -14,6 +14,25 @@ Port de [re:Blue](https://github.com/zolaware/reblue) (Blue Dragon recompilado) 
 | Proyecto Android (Gradle/APK) | Compila |
 | Probado en un móvil | **Todavía no** |
 
+## Descargar el código
+
+Los cambios del port están en la rama `android-port` de cuatro forks. Se clonan dentro de esta carpeta:
+
+```bash
+git clone https://github.com/zackfairestar-debug/reblue-android
+```
+```bash
+cd reblue-android
+```
+```bash
+git clone --branch android-port --recurse-submodules https://github.com/zackfairestar-debug/reblue
+```
+```bash
+git clone --branch android-port --recurse-submodules https://github.com/zackfairestar-debug/rexglue-sdk
+```
+
+Los submódulos de `reblue` (plume y XenosRecomp) ya apuntan a sus forks con los cambios para Android.
+
 ## Requisitos
 
 - **Móvil:** Android 13 o superior, ARM64, Vulkan 1.2. Recomendado: Snapdragon 8 Gen 2 o superior (Adreno), con 12 GB de RAM o más. En GPUs Mali los drivers Vulkan suelen dar más problemas.
