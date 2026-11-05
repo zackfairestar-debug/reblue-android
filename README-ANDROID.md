@@ -71,6 +71,29 @@ Cada paso también se puede ejecutar por separado: `prepare_assets.py`, `build-h
 - **Mando físico** (Bluetooth o USB): al conectarlo, los controles táctiles se ocultan solos.
 - En el instalador, los toques funcionan como ratón.
 
+## Segunda pantalla (AYN Thor y consolas de doble pantalla)
+
+Si la consola tiene una segunda pantalla, re:Blue abre en ella un panel táctil en vivo con el aspecto del menú del campamento del juego. Los gráficos son los del propio juego: ventanas, cursor, caras, barras de PS/PM, iconos de clase y de estado, la flecha del mapa… Se leen en el móvil de tu juego instalado, así que el APK no lleva arte del juego. Los textos en español son los del juego («Estado», «Sombra», «Maestro de espada», «PS», «NV», «RG», «PH», «Oro»…).
+
+A la izquierda está la columna de comandos, como en el menú del juego:
+
+- **Estado:** las fichas de los cinco personajes, como en el menú: cara, NV, PS/PM con sus barras, clase de sombra con su rango, estados alterados y la estrella del líder. Debajo, los accesorios del personaje que toques.
+- **Sombra:** las nueve clases de sombra del personaje elegido, con su rango (RG) y puntos de habilidad (PH). La clase equipada va marcada y las que aún no tiene salen apagadas.
+- **Objetos:** la bolsa, con los nombres del juego.
+- **Mapa:** un mapa normal de la zona, como la pantalla de mapa del juego: el piso entero, fijo y ajustado a la ventana (es la textura del minimapa que el juego tiene cargada), con tu flecha y lo que queda por encontrar (cofres, puntos de búsqueda, barreras…). Debajo está el recuento. ＋ acerca y sigue a tu personaje; － vuelve a la vista entera.
+- **Combate:** aparece solo durante las batallas y se abre sola. Muestra la vida de los enemigos y las fichas del grupo, con el cursor en quien tiene el turno.
+
+El panel no toca los controles: se juega con los botones de la consola. ☾ apaga la pantalla de abajo (negro) y ⚙ tiene el idioma, la vibración y el cambio automático a Combate. «Apagar panel» lo quita hasta que vuelvas a abrir el juego.
+
+Rendimiento: el juego solo lee su estado mientras el panel lo está pidiendo. Sin segunda pantalla, con ☾ o con el panel apagado, deja de hacerlo al segundo y medio. El mapa se dibuja una vez por piso; al moverte solo se redibuja la flecha.
+
+Lo que hay que comprobar en la consola la primera vez:
+
+- **Mapa:** la colocación y la flecha usan las fórmulas del mapa de zona del port (`local_map.cpp`), pero no se han visto en la consola. Donde el juego no tenga minimapa, el mapa muestra solo los marcadores alrededor de tu posición.
+- **Enemigos:** el port no tiene sus nombres, así que salen como «Enemigo A», «Jefe A»…
+
+El código está en `reblue/src/platform/android_companion.cpp` (lee el estado en el hilo del juego cada pocos fotogramas, solo mientras el panel lo pide, y copia la textura del minimapa cuando cambia de piso), `reblue/src/platform/android_companion_tex.cpp` (pasa texturas de Xbox 360 a PNG), `android/.../DualScreenCompanion.java` (la ventana de la segunda pantalla) y `android/app/src/main/assets/companion/` (el panel). Sin el juego, el panel usa datos de ejemplo (`?mode=field`, `?mode=battle`, `?mode=title`) y, si no encuentra los gráficos, dibuja ventanas sencillas.
+
 ## Si algo falla
 
 ```bash

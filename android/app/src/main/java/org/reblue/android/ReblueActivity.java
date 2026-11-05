@@ -17,6 +17,9 @@ import java.util.ArrayList;
 public class ReblueActivity extends SDLActivity {
     static final String EXTRA_ARGS = "org.reblue.android.ARGS";
 
+    /** Live panel on the second display of dual-screen handhelds (AYN Thor). */
+    private DualScreenCompanion companion;
+
     @Override
     protected String[] getLibraries() {
         return new String[] { "c++_shared", "rexruntime", "reblue" };
@@ -32,6 +35,19 @@ public class ReblueActivity extends SDLActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        companion = new DualScreenCompanion(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (companion != null) companion.start();
+    }
+
+    @Override
+    protected void onStop() {
+        if (companion != null) companion.stop();
+        super.onStop();
     }
 
     @Override
