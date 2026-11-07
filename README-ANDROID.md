@@ -81,7 +81,11 @@ En **Ajustes → Pantalla → Tasa FPS** hay una opción nueva, **Ahorro de ener
 
 También se cambia desde la pantalla de abajo: en ⚙ del panel está «Ahorro de energía (juego)» y, debajo, en directo, los fps, la temperatura y la batería.
 
+Si la consola no informa de su margen térmico (el Thor no lo hace), Auto se guía también por la temperatura de la batería: baja a 30 fps a partir de 40 °C y vuelve a 60 cuando lleva 45 s por debajo de 37 °C.
+
 Además, sin tocar nada:
+
+- **Resolución interna 1280×720**, la original del juego, en vez de la de la pantalla (1920×1080 en el Thor): la GPU dibuja 2,25 veces menos píxeles. Se aplica una vez; si eliges otra en Ajustes → Pantalla → Resolución (o «Auto» para la nativa), se respeta.
 
 - Con la app en segundo plano o la pantalla apagada, el juego casi se detiene (5 fps, a una sexta parte de la velocidad) en vez de seguir a 30 fps. Al volver, está donde lo dejaste.
 
