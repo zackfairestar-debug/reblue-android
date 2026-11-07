@@ -22,7 +22,7 @@
       cmds: { party: 'Estado', shadow: 'Sombra', bag: 'Objetos', map: 'Mapa', log: 'Diario', battle: 'Combate' },
       items: 'Objetos', settings: 'Ajustes', language: 'Idioma', gold: 'Oro', journal: 'Diario de viaje',
       optPower: 'Ahorro de energía (juego)', powerOff: 'Desactivado', powerAuto: 'Automático', powerMax: 'Máximo (30 fps)',
-      perfFps: 'fps', perfCapHot: 'por calor', perfCapLow: 'por batería baja', perfCapMax: 'modo máximo',
+      perfFps: 'fps', perfCapHot: 'por calor', perfCapLow: 'con batería', perfCapMax: 'modo máximo',
       perfTemp: ['Temperatura normal', 'Templada', 'Caliente', 'Muy caliente', 'Crítica', 'Crítica', 'Crítica'],
       perfBattery: 'Batería', perfCharging: 'cargando',
       optHaptics: 'Vibración al tocar', optBattle: 'Pasar a Combate al empezar una batalla',
@@ -65,7 +65,7 @@
       cmds: { party: 'Status', shadow: 'Shadow', bag: 'Items', map: 'Map', log: 'Journal', battle: 'Battle' },
       items: 'Items', settings: 'Settings', language: 'Language', gold: 'Gold', journal: 'Travel journal',
       optPower: 'Power saving (game)', powerOff: 'Off', powerAuto: 'Auto', powerMax: 'Max (30 fps)',
-      perfFps: 'fps', perfCapHot: 'while hot', perfCapLow: 'low battery', perfCapMax: 'max mode',
+      perfFps: 'fps', perfCapHot: 'while hot', perfCapLow: 'on battery', perfCapMax: 'max mode',
       perfTemp: ['Temperature normal', 'Warm', 'Hot', 'Very hot', 'Critical', 'Critical', 'Critical'],
       perfBattery: 'Battery', perfCharging: 'charging',
       optHaptics: 'Vibrate on touch', optBattle: 'Switch to Battle when a battle starts',
@@ -708,7 +708,20 @@
     if (goldAcc) note(goldAcc > 0 ? 'gold' : 'spent', { v: Math.abs(goldAcc) });
     goldAcc = 0; goldTimer = null;
   }
+  // Older builds listed characters who had not joined yet, and the journal filled with their
+  // class unlocks. Once a session, drop entries about anyone not in the party or the reserve.
+  let journalPruned = false;
+  function pruneStrangers(b) {
+    if (journalPruned || !Array.isArray(b.party) || !b.party.length || !Array.isArray(b.reserve)) return;
+    journalPruned = true;
+    const met = new Set(b.party.concat(b.reserve).map((c) => c.pc));
+    const kept = journal.filter((e) => e[2].pc == null || met.has(e[2].pc));
+    if (kept.length === journal.length) return;
+    journal = kept;
+    try { localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal)); } catch (e) { /* kept in memory */ }
+  }
   function journalDiff(a, b) {
+    if (b && b.mode !== 'title' && b.mode !== 'boot') pruneStrangers(b);
     if (!a || !a.mode || !b || !Array.isArray(b.party) || b.mode === 'title' || b.mode === 'boot') return;
     if (!Array.isArray(a.party) || !a.party.length || a.mode === 'title') return; // first snapshot of a session or a load
     if (b.location && b.location !== a.location) note('area', { p: b.location });

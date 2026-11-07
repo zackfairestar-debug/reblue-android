@@ -75,13 +75,13 @@ Cada paso también se puede ejecutar por separado: `prepare_assets.py`, `build-h
 
 En **Ajustes → Pantalla → Tasa FPS** hay una opción nueva, **Ahorro de energía**:
 
-- **Auto** (la de serie): juega a 60 fps y baja a 30 fps, la velocidad original del juego (la lógica de Blue Dragon va siempre a 30 Hz; lo que pasa de ahí es interpolación), cuando Android avisa de que la consola se está calentando o cuando la batería baja del 15 % sin estar cargando. Vuelve a 60 cuando lleva un rato fría o la enchufas.
+- **Auto** (la de serie): con batería juega a 30 fps, la velocidad original del juego (la lógica de Blue Dragon va siempre a 30 Hz; lo que pasa de ahí es interpolación). Con el cargador sube a 60 fps, salvo que Android avise de que la consola está caliente. En el Thor, a 60 fps la batería bajaba un 1 % por minuto y la consola no avisaba nunca del calor, por eso Auto ya no espera a esa señal.
 - **Máx:** siempre a 30 fps. Es la que menos calienta y más batería ahorra.
 - **Desactivado:** nunca baja.
 
 También se cambia desde la pantalla de abajo: en ⚙ del panel está «Ahorro de energía (juego)» y, debajo, en directo, los fps, la temperatura y la batería.
 
-Si la consola no informa de su margen térmico (el Thor no lo hace), Auto se guía también por la temperatura de la batería: baja a 30 fps a partir de 40 °C y vuelve a 60 cuando lleva 45 s por debajo de 37 °C.
+Con el cargador, si la consola no informa de su margen térmico (el Thor no lo hace), Auto se guía también por la temperatura de la batería: baja a 30 fps a partir de 40 °C y vuelve a 60 cuando lleva 45 s por debajo de 37 °C. Si quieres 60 fps también con batería, elige **Desactivado**.
 
 Además, sin tocar nada:
 
