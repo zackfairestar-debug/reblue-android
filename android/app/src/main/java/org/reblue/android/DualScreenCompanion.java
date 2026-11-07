@@ -54,6 +54,8 @@ final class DualScreenCompanion implements DisplayManager.DisplayListener {
     static final String PREF_ENABLED = "enabled";
 
     static native String nativeState();
+    /** The leader's live position, "x,z,yaw", empty off the field. */
+    static native String nativePos();
     /** True once the game loop runs (guest memory mapped); see waitForEngine. */
     static native boolean nativeEngineReady();
     /** A texture of the installed game as PNG ("d2anime/res/cmn_fc.dds"), or null. */
@@ -342,6 +344,15 @@ final class DualScreenCompanion implements DisplayManager.DisplayListener {
                     return nativeState();
                 } catch (UnsatisfiedLinkError e) {
                     return "{}";
+                }
+            }
+
+            @JavascriptInterface
+            public String pos() {
+                try {
+                    return nativePos();
+                } catch (UnsatisfiedLinkError e) {
+                    return "";
                 }
             }
 

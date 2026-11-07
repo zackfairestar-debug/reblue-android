@@ -71,6 +71,24 @@ Cada paso también se puede ejecutar por separado: `prepare_assets.py`, `build-h
 - **Mando físico** (Bluetooth o USB): al conectarlo, los controles táctiles se ocultan solos.
 - En el instalador, los toques funcionan como ratón.
 
+## Calor y batería
+
+En **Ajustes → Pantalla → Tasa FPS** hay una opción nueva, **Ahorro de energía**:
+
+- **Auto** (la de serie): juega a 60 fps y, cuando Android avisa de que la consola se está calentando, baja a 30 fps, la velocidad original del juego (la lógica de Blue Dragon va siempre a 30 Hz; lo que pasa de ahí es interpolación). Vuelve a 60 cuando lleva un rato fría.
+- **Máx:** siempre a 30 fps. Es la que menos calienta y más batería ahorra.
+- **Desactivado:** nunca baja.
+
+Además, sin tocar nada:
+
+- El límite de FPS de serie en Android es 60 (antes era ilimitado y dibujaba fotogramas que la pantalla tiraba).
+- La pantalla se pone a la frecuencia del juego: la del Thor, de 120 Hz, pasa a 60 Hz mientras juegas (si el panel puede cambiar sin parpadeo).
+- Las escenas en pausa y los vídeos van a 30 fps.
+- Se arregló un fallo que recreaba la swapchain en cada fotograma.
+- El panel de la pantalla de abajo solo se anima en la pestaña Mapa; en las demás, con ☾ o en segundo plano, ni dibuja ni pide datos al juego.
+
+En el log, la línea `[perf]` dice el estado térmico y si el ahorro está actuando (`power auto, capped 30`).
+
 ## Segunda pantalla (AYN Thor y consolas de doble pantalla)
 
 Si la consola tiene una segunda pantalla, re:Blue abre en ella un panel táctil en vivo con el aspecto del menú del campamento del juego. Los gráficos son los del propio juego: ventanas, cursor, caras, barras de PS/PM, iconos de clase y de estado, la flecha del mapa… Se leen en el móvil de tu juego instalado, así que el APK no lleva arte del juego. Los textos en español son los del juego («Estado», «Sombra», «Maestro de espada», «PS», «NV», «RG», «PH», «Oro»…).
