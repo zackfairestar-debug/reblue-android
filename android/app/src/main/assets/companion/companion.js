@@ -21,6 +21,10 @@
     es: {
       cmds: { party: 'Estado', shadow: 'Sombra', bag: 'Objetos', map: 'Mapa', log: 'Diario', battle: 'Combate' },
       items: 'Objetos', settings: 'Ajustes', language: 'Idioma', gold: 'Oro', journal: 'Diario de viaje',
+      optPower: 'Ahorro de energía (juego)', powerOff: 'Desactivado', powerAuto: 'Automático', powerMax: 'Máximo (30 fps)',
+      perfFps: 'fps', perfCapHot: 'por calor', perfCapLow: 'por batería baja', perfCapMax: 'modo máximo',
+      perfTemp: ['Temperatura normal', 'Templada', 'Caliente', 'Muy caliente', 'Crítica', 'Crítica', 'Crítica'],
+      perfBattery: 'Batería', perfCharging: 'cargando',
       optHaptics: 'Vibración al tocar', optBattle: 'Pasar a Combate al empezar una batalla',
       optScene: 'Mostrar la vista de escena durante las escenas',
       optRest: 'Reposo (pantalla negra con reloj) tras un rato sin tocar, fuera de combate',
@@ -60,6 +64,10 @@
     en: {
       cmds: { party: 'Status', shadow: 'Shadow', bag: 'Items', map: 'Map', log: 'Journal', battle: 'Battle' },
       items: 'Items', settings: 'Settings', language: 'Language', gold: 'Gold', journal: 'Travel journal',
+      optPower: 'Power saving (game)', powerOff: 'Off', powerAuto: 'Auto', powerMax: 'Max (30 fps)',
+      perfFps: 'fps', perfCapHot: 'while hot', perfCapLow: 'low battery', perfCapMax: 'max mode',
+      perfTemp: ['Temperature normal', 'Warm', 'Hot', 'Very hot', 'Critical', 'Critical', 'Critical'],
+      perfBattery: 'Battery', perfCharging: 'charging',
       optHaptics: 'Vibrate on touch', optBattle: 'Switch to Battle when a battle starts',
       optScene: 'Show the scene view during scenes',
       optRest: 'Rest (black screen with a clock) after a while untouched, outside battle',
@@ -963,10 +971,48 @@
     $('optRestOut').textContent = settings.restMin + ' min';
     $('optBrightOut').textContent = settings.bright + ' %';
   }
+  // The game's power-saving mode and how the console is doing, live while
+  // the settings are open (one bridge call a second, nothing otherwise).
+  let perfTimer = 0;
+  function readPerf() {
+    if (!bridge || !bridge.perf) return null;
+    try { return JSON.parse(bridge.perf() || 'null'); } catch (e) { return null; }
+  }
+  function showPerf() {
+    const p = readPerf();
+    const el = $('perfStatus');
+    if (!p) { el.textContent = ''; $('optPower').disabled = !bridge || !bridge.setPower; return; }
+    if (document.activeElement !== $('optPower')) $('optPower').value = String(p.mode);
+    const parts = [];
+    if (p.fps > 0) {
+      let f = p.fps + ' ' + T.perfFps;
+      if (p.cap > 0) f += ' (' + (p.mode === 2 ? T.perfCapMax : p.hot ? T.perfCapHot : T.perfCapLow) + ')';
+      parts.push(f);
+    }
+    if (p.thermal >= 0) parts.push(T.perfTemp[Math.min(p.thermal, T.perfTemp.length - 1)]);
+    if (p.battery >= 0) {
+      let b = T.perfBattery + ' ' + p.battery + ' %';
+      if (p.charging) b += ', ' + T.perfCharging;
+      if (p.temp > 0) b += ' · ' + p.temp.toFixed(1) + ' °C';
+      parts.push(b);
+    }
+    el.textContent = parts.join(' · ');
+  }
+  function closeSettings() {
+    clearInterval(perfTimer); perfTimer = 0;
+    $('settings').classList.add('hidden');
+  }
+  $('optPower').addEventListener('change', (e) => {
+    haptic();
+    if (bridge && bridge.setPower) bridge.setPower(Number(e.target.value));
+    setTimeout(showPerf, 300);
+  });
   $('settingsBtn').addEventListener('click', () => {
     haptic(); syncOpts();
     $('artStatus').textContent = art ? T.artOn : T.artOff;
     $('settings').classList.remove('hidden');
+    showPerf();
+    clearInterval(perfTimer); perfTimer = setInterval(showPerf, 1000);
   });
   for (const [id, key] of Object.entries(opt)) {
     $(id).addEventListener($(id).type === 'range' ? 'input' : 'change', (e) => {
@@ -983,7 +1029,7 @@
     journal = []; localStorage.removeItem(JOURNAL_KEY);
     sig = {}; render();
   });
-  $('closeSettings').addEventListener('click', () => { haptic(); $('settings').classList.add('hidden'); });
+  $('closeSettings').addEventListener('click', () => { haptic(); closeSettings(); });
   $('disableBtn').addEventListener('click', () => { if (bridge && bridge.disable) bridge.disable(); });
   window.addEventListener('resize', () => { fit(); sig = {}; render(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveTrails(); });

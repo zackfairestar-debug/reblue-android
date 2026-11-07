@@ -75,11 +75,15 @@ Cada paso también se puede ejecutar por separado: `prepare_assets.py`, `build-h
 
 En **Ajustes → Pantalla → Tasa FPS** hay una opción nueva, **Ahorro de energía**:
 
-- **Auto** (la de serie): juega a 60 fps y, cuando Android avisa de que la consola se está calentando, baja a 30 fps, la velocidad original del juego (la lógica de Blue Dragon va siempre a 30 Hz; lo que pasa de ahí es interpolación). Vuelve a 60 cuando lleva un rato fría.
+- **Auto** (la de serie): juega a 60 fps y baja a 30 fps, la velocidad original del juego (la lógica de Blue Dragon va siempre a 30 Hz; lo que pasa de ahí es interpolación), cuando Android avisa de que la consola se está calentando o cuando la batería baja del 15 % sin estar cargando. Vuelve a 60 cuando lleva un rato fría o la enchufas.
 - **Máx:** siempre a 30 fps. Es la que menos calienta y más batería ahorra.
 - **Desactivado:** nunca baja.
 
+También se cambia desde la pantalla de abajo: en ⚙ del panel está «Ahorro de energía (juego)» y, debajo, en directo, los fps, la temperatura y la batería.
+
 Además, sin tocar nada:
+
+- Con la app en segundo plano o la pantalla apagada, el juego casi se detiene (5 fps, a una sexta parte de la velocidad) en vez de seguir a 30 fps. Al volver, está donde lo dejaste.
 
 - El límite de FPS de serie en Android es 60 (antes era ilimitado y dibujaba fotogramas que la pantalla tiraba).
 - La pantalla se pone a la frecuencia del juego: la del Thor, de 120 Hz, pasa a 60 Hz mientras juegas (si el panel puede cambiar sin parpadeo).

@@ -56,6 +56,10 @@ final class DualScreenCompanion implements DisplayManager.DisplayListener {
     static native String nativeState();
     /** The leader's live position, "x,z,yaw", empty off the field. */
     static native String nativePos();
+    /** Frame rate, thermal state, power-saving mode and battery as JSON. */
+    static native String nativePerf();
+    /** Power saving 0 off, 1 auto, 2 max; applied and saved on the frame thread. */
+    static native void nativeSetPowerSaving(int mode);
     /** True once the game loop runs (guest memory mapped); see waitForEngine. */
     static native boolean nativeEngineReady();
     /** A texture of the installed game as PNG ("d2anime/res/cmn_fc.dds"), or null. */
@@ -353,6 +357,24 @@ final class DualScreenCompanion implements DisplayManager.DisplayListener {
                     return nativePos();
                 } catch (UnsatisfiedLinkError e) {
                     return "";
+                }
+            }
+
+            @JavascriptInterface
+            public String perf() {
+                try {
+                    return nativePerf();
+                } catch (UnsatisfiedLinkError e) {
+                    return "";
+                }
+            }
+
+            @JavascriptInterface
+            public void setPower(int mode) {
+                try {
+                    nativeSetPowerSaving(mode);
+                } catch (UnsatisfiedLinkError e) {
+                    // No game library: nothing to set.
                 }
             }
 

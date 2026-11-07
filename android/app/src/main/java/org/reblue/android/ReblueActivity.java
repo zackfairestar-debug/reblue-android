@@ -1,6 +1,10 @@
 package org.reblue.android;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Process;
 import android.view.WindowManager;
@@ -19,6 +23,35 @@ public class ReblueActivity extends SDLActivity {
 
     /** Live panel on the second display of dual-screen handhelds (AYN Thor). */
     private DualScreenCompanion companion;
+
+    /**
+     * Battery level, charging and temperature for the power-saving mode
+     * (platform/android_perf.cpp): Auto drops to 30 fps on a low battery.
+     */
+    static native void nativeBattery(int percent, boolean charging, int deciCelsius);
+
+    private final BroadcastReceiver battery = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            reportBattery(intent);
+        }
+    };
+
+    private static void reportBattery(Intent intent) {
+        if (intent == null) return;
+        int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+        int percent = (level >= 0 && scale > 0) ? Math.round(level * 100f / scale) : -1;
+        int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        boolean charging = status == BatteryManager.BATTERY_STATUS_CHARGING
+                || status == BatteryManager.BATTERY_STATUS_FULL;
+        int temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
+        try {
+            nativeBattery(percent, charging, temp);
+        } catch (UnsatisfiedLinkError e) {
+            // The game library did not load; SDL shows its own error.
+        }
+    }
 
     @Override
     protected String[] getLibraries() {
@@ -42,11 +75,18 @@ public class ReblueActivity extends SDLActivity {
     protected void onStart() {
         super.onStart();
         if (companion != null) companion.start();
+        // Sticky: registering hands back the current state straight away.
+        reportBattery(registerReceiver(battery, new IntentFilter(Intent.ACTION_BATTERY_CHANGED)));
     }
 
     @Override
     protected void onStop() {
         if (companion != null) companion.stop();
+        try {
+            unregisterReceiver(battery);
+        } catch (IllegalArgumentException e) {
+            // Not registered.
+        }
         super.onStop();
     }
 
