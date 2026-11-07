@@ -138,35 +138,71 @@
     grass: '#9cd86c', chest: '#d8b44a', barrier: '#c08cff', lock: '#b0b0b0', damage: '#ff6a52', status: '#b0b0b0', message: '#b0b0b0' };
   const SQUARE = { chest: true, barrier: true };
 
-  const UV_PNT = [0.5, 0, 0.75, 0.25], UV_HATENA = [0, 0.5, 0.5, 1];
+  // Map markers: the game's own item art (res\ic_item, 8 x 4 cells of 32 px; the shop's medal;
+  // wrp_target's barrier emblem) on a dark badge ringed in the kind's color.
+  const IC = (c, r) => ['item', c / 8, r / 4, (c + 1) / 8, (r + 1) / 4];
+  const MARKER_ART = {
+    item: IC(5, 0),        // potion bottle
+    gold: IC(5, 1),        // roll of gold
+    medal: ['medal', 0, 0, 1, 1],
+    param: IC(1, 0),       // crystal
+    heal: IC(5, 3),        // glowing orb
+    grass: IC(0, 0),       // leaf
+    chest: IC(3, 2),       // strongbox
+    barrier: ['target', 0, 0, 0.5, 0.5],
+    lock: IC(0, 1),        // key
+    damage: IC(5, 2),      // spiked orb
+    status: IC(4, 2),      // gear
+    message: IC(6, 0)      // note
+  };
+  const SHEETS = { item: 'd2anime/res/ic_item', medal: 'd2anime/shp/res/icon_medal_01', target: ART.target };
+  const SPARKLE_UV = [0, 0, 0.5, 0.5]; // wrp_target03's large glint
   const markerIcons = {};
-  // The marker icon for a kind as a canvas, tinted like the engine's vertex color, or null
-  // until the sheet has loaded.
+  const ready = (im) => im && im.complete && im.naturalWidth > 0;
+  // The marker badge for a kind as a 64 px canvas, or null until its sheet has loaded.
   function markerIcon(kind) {
     if (markerIcons[kind]) return markerIcons[kind];
-    const chest = kind === 'chest';
-    const im = art && image(chest ? ART.target : ART.target03);
-    if (!im || !im.complete || !im.naturalWidth) return null;
-    const uv = chest ? UV_PNT : UV_HATENA;
-    const sx = uv[0] * im.naturalWidth, sy = uv[1] * im.naturalHeight;
-    const sw = (uv[2] - uv[0]) * im.naturalWidth, sh = (uv[3] - uv[1]) * im.naturalHeight;
+    if (!art) return null;
+    const a = MARKER_ART[kind] || MARKER_ART.message;
+    const im = image(SHEETS[a[0]]);
+    if (!ready(im)) return null;
     const c = document.createElement('canvas');
     c.width = 64; c.height = 64;
     const g = c.getContext('2d');
+    const col = KIND_COLOR[kind] || '#b0b0b0';
+    // badge: dark disc, colored ring, a soft inner glow of the same color
+    const grad = g.createRadialGradient(32, 30, 4, 32, 32, 29);
+    grad.addColorStop(0, 'rgba(60,64,110,0.95)');
+    grad.addColorStop(1, 'rgba(12,12,30,0.95)');
+    g.fillStyle = grad;
+    g.beginPath(); g.arc(32, 32, 28, 0, Math.PI * 2); g.fill();
+    g.lineWidth = 5; g.strokeStyle = col;
+    g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.stroke();
+    g.lineWidth = 1.5; g.strokeStyle = 'rgba(0,0,0,0.8)';
+    g.beginPath(); g.arc(32, 32, 30, 0, Math.PI * 2); g.stroke();
     g.imageSmoothingQuality = 'high';
-    g.drawImage(im, sx, sy, sw, sh, 0, 0, 64, 64);
-    if (!chest) {
-      // Vertex color multiplies the texel: multiply, then keep the sheet's own alpha.
-      g.globalCompositeOperation = 'multiply';
-      g.fillStyle = KIND_COLOR[kind] || '#b0b0b0';
-      g.fillRect(0, 0, 64, 64);
-      g.globalCompositeOperation = 'destination-in';
-      g.drawImage(im, sx, sy, sw, sh, 0, 0, 64, 64);
-    }
+    const sx = a[1] * im.naturalWidth, sy = a[2] * im.naturalHeight;
+    const sw = (a[3] - a[1]) * im.naturalWidth, sh = (a[4] - a[2]) * im.naturalHeight;
+    const inset = a[0] === 'item' ? 8 : 11;
+    g.shadowColor = 'rgba(0,0,0,0.85)'; g.shadowBlur = 3; g.shadowOffsetY = 1;
+    g.drawImage(im, sx, sy, sw, sh, inset, inset, 64 - 2 * inset, 64 - 2 * inset);
     c.dataUrl = c.toDataURL();
     markerIcons[kind] = c;
     sig.legend = null;
     return c;
+  }
+  // The game's glint, shown over a marker now and then (MarkerPulse's rhythm, rippled by position).
+  function drawGlint(g, x, y, mk, t) {
+    const im = art && image(ART.target03);
+    if (!ready(im)) return;
+    const phase = (t / 1400 + mk.x * 0.013 + mk.z * 0.019) % 1;
+    const p = phase < 0.18 ? phase / 0.18 : phase < 0.28 ? 1 - (phase - 0.18) / 0.1 : 0;
+    if (p <= 0.02) return;
+    const w = im.naturalWidth, h = im.naturalHeight, size = 26 * (0.6 + 0.4 * p);
+    g.globalAlpha = p;
+    g.drawImage(im, SPARKLE_UV[0] * w, SPARKLE_UV[1] * h, (SPARKLE_UV[2] - SPARKLE_UV[0]) * w, (SPARKLE_UV[3] - SPARKLE_UV[1]) * h,
+      x + 4 - size / 2, y - 8 - size / 2, size, size);
+    g.globalAlpha = 1;
   }
 
   // background-size/position for a uv crop of a texture.
@@ -588,7 +624,9 @@
     const p = stepLive(readLive() || { x: m.x, z: m.z, yaw: m.yaw || 0 }, worldPerPx * 120);
     recordTrail(state.stage, p, worldPerPx * 6);
     const key = [lastSerial, state.stage, p.x.toFixed(1), p.z.toFixed(1), p.yaw.toFixed(3), mapState.follow, mapState.free,
-      mapState.cu, mapState.cv, settings.zoom, scale, window.devicePixelRatio, sp.img ? sp.img.complete && sp.img.naturalWidth : 0].join('|');
+      mapState.cu, mapState.cv, settings.zoom, scale, window.devicePixelRatio, sp.img ? sp.img.complete && sp.img.naturalWidth : 0,
+      // the glints: at most 8 redraws a second while standing still
+      Object.keys(markerIcons).length, (m.markers || []).length ? Math.floor(performance.now() / 125) : 0].join('|');
     if (key === lastDrawKey) return;
     lastDrawKey = key;
     drawMap(m, sp, p);
@@ -648,14 +686,16 @@
       g.setLineDash([3, 8]); g.strokeStyle = 'rgba(190,225,255,.95)'; g.lineWidth = 3; g.stroke();
       g.setLineDash([]);
     }
+    const now = performance.now();
     for (const mk of m.markers || []) {
       const [x, y] = toScreen(...sp.px(mk.x, mk.z));
       if (x < -14 || y < -14 || x > MAP_W + 14 || y > MAP_H + 14) continue;
       const icon = markerIcon(mk.k);
       if (icon) {
-        g.shadowColor = 'rgba(0,0,0,.8)'; g.shadowBlur = 3;
-        g.drawImage(icon, x - 12, y - 12, 24, 24);
+        g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 4;
+        g.drawImage(icon, x - 15, y - 15, 30, 30);
         g.shadowBlur = 0;
+        drawGlint(g, x, y, mk, now);
         continue;
       }
       g.fillStyle = KIND_COLOR[mk.k] || '#b0b0b0';
