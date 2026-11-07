@@ -109,6 +109,8 @@ A la izquierda está la columna de comandos, como en el menú del juego:
 - **Mapa:** un mapa normal de la zona, como la pantalla de mapa del juego: el piso entero, fijo y ajustado a la ventana (es la textura del minimapa que el juego tiene cargada), con tu flecha y lo que queda por encontrar (cofres, puntos de búsqueda, barreras…). Debajo está el recuento. ＋ acerca y sigue a tu personaje; － vuelve a la vista entera.
 - **Combate:** aparece solo durante las batallas y se abre sola. Muestra la vida de los enemigos y las fichas del grupo, con el cursor en quien tiene el turno.
 
+En combate, cada enemigo lleva su retrato del juego (`icon_enemy`, el mismo número que su modelo: `ic_em###` o `ic_bs##` para los jefes), también en su ficha al tocarlo. En el mapa, los cofres y lo que queda por encontrar usan los iconos del mapa del juego (`wrp_target` y `wrp_target03`, teñidos por tipo como hace el juego), igual que la leyenda. Arriba, junto al oro, se ven siempre los fps y la batería (en azul si está cargando, en rojo por debajo del 15 %).
+
 El panel no toca los controles: se juega con los botones de la consola. ☾ apaga la pantalla de abajo (negro) y ⚙ tiene el idioma, la vibración y el cambio automático a Combate. «Apagar panel» lo quita hasta que vuelvas a abrir el juego.
 
 Rendimiento: el juego solo lee su estado mientras el panel lo está pidiendo. Sin segunda pantalla, con ☾ o con el panel apagado, deja de hacerlo al segundo y medio. El mapa se dibuja una vez por piso; al moverte solo se redibuja la flecha.

@@ -114,8 +114,17 @@
     face: 'd2anime/res/cmn_fc', lay: 'd2anime/res/cmn_lay_main01_xx', bar: 'd2anime/res/cmn_stas_bar',
     hpmp: 'd2anime/res/cmn_hpmp_xx', cls: 'd2anime/res/cmn_ic_ct', stas: 'd2anime/res/cmn_icon_stas',
     leader: 'd2anime/res/icon_leader', heada: 'd2anime/res/cmn_heada_xx', win: 'bd_system/wnd/bt_01_of',
-    arrow: 'minimap/mm_entrance'
+    arrow: 'minimap/mm_entrance', target: 'd2anime/res/wrp_target', target03: 'd2anime/res/wrp_target03'
   };
+  // The game's own enemy portraits (icon_enemy\ic_em###, ic_bs## for bosses), named after the
+  // enemy type the way bdEnemyResourceInit names its model: em%03d below 10000, bs%02d above.
+  function foeArt(type) {
+    if (!(type > 0)) return '';
+    return type >= 10000 ? 'icon_enemy/ic_bs' + String(type - 10000).padStart(2, '0')
+      : 'icon_enemy/ic_em' + String(type).padStart(3, '0');
+  }
+  const foeImg = (type, cls) => (art && foeArt(type)
+    ? `<img class="${cls}" src="${url(foeArt(type))}" alt="" onerror="this.remove()">` : '');
   const url = (path) => `game/${path}.png`;
   // Pc0NFcUv, res\cmn_fc
   const FACE_UV = { 1: [0, 0, 0.5, 0.25], 2: [0, 0.5, 0.5, 0.75], 3: [0, 0.25, 0.5, 0.5], 4: [0, 0.75, 0.5, 1], 5: [0.5, 0, 1, 0.25] };
@@ -128,6 +137,37 @@
   const KIND_COLOR = { item: '#ffd24a', gold: '#ffa02a', medal: '#6fe0ff', param: '#7ce07c', heal: '#ff8cc0',
     grass: '#9cd86c', chest: '#d8b44a', barrier: '#c08cff', lock: '#b0b0b0', damage: '#ff6a52', status: '#b0b0b0', message: '#b0b0b0' };
   const SQUARE = { chest: true, barrier: true };
+
+  const UV_PNT = [0.5, 0, 0.75, 0.25], UV_HATENA = [0, 0.5, 0.5, 1];
+  const markerIcons = {};
+  // The marker icon for a kind as a canvas, tinted like the engine's vertex color, or null
+  // until the sheet has loaded.
+  function markerIcon(kind) {
+    if (markerIcons[kind]) return markerIcons[kind];
+    const chest = kind === 'chest';
+    const im = art && image(chest ? ART.target : ART.target03);
+    if (!im || !im.complete || !im.naturalWidth) return null;
+    const uv = chest ? UV_PNT : UV_HATENA;
+    const sx = uv[0] * im.naturalWidth, sy = uv[1] * im.naturalHeight;
+    const sw = (uv[2] - uv[0]) * im.naturalWidth, sh = (uv[3] - uv[1]) * im.naturalHeight;
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const g = c.getContext('2d');
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(im, sx, sy, sw, sh, 0, 0, 64, 64);
+    if (!chest) {
+      // Vertex color multiplies the texel: multiply, then keep the sheet's own alpha.
+      g.globalCompositeOperation = 'multiply';
+      g.fillStyle = KIND_COLOR[kind] || '#b0b0b0';
+      g.fillRect(0, 0, 64, 64);
+      g.globalCompositeOperation = 'destination-in';
+      g.drawImage(im, sx, sy, sw, sh, 0, 0, 64, 64);
+    }
+    c.dataUrl = c.toDataURL();
+    markerIcons[kind] = c;
+    sig.legend = null;
+    return c;
+  }
 
   // background-size/position for a uv crop of a texture.
   function crop(path, u0, v0, u1, v1) {
@@ -440,16 +480,18 @@
 
   function renderLegend(m) {
     const markers = (m.available && m.markers) || [];
-    if (!changed('legend', [m.available, m.chests, m.points, m.barriers, markers.map((k) => k.k + (k.name || '')), lang()])) return;
+    if (!changed('legend', [m.available, m.chests, m.points, m.barriers, markers.map((k) => k.k + (k.name || '')), Object.keys(markerIcons).length, lang()])) return;
     const counts = {};
     for (const k of markers) counts[k.k] = (counts[k.k] || 0) + 1;
     const tally = (label, t) => (t && t[1] ? `<span class="lg tally"><span class="n">${label}</span><span class="num">${t[0]} / ${t[1]}</span></span>` : '');
     let html = tally(T.chests, m.chests) + tally(T.points, m.points) + tally(T.barriers, m.barriers);
     const kinds = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-    html += kinds.map((k) => `<span class="lg"><span class="dot ${SQUARE[k] ? 'sq' : ''}" style="background:${KIND_COLOR[k] || '#b0b0b0'}"></span>
+    const dot = (k) => { const ic = markerIcon(k); return ic ? `<img class="lgi" src="${ic.dataUrl}" alt="">`
+      : `<span class="dot ${SQUARE[k] ? 'sq' : ''}" style="background:${KIND_COLOR[k] || '#b0b0b0'}"></span>`; };
+    html += kinds.map((k) => `<span class="lg">${dot(k)}
       <span class="n">${esc(T.kinds[k] || k)}</span><span class="num">${counts[k]}</span></span>`).join('');
     const named = [...new Set(markers.filter((k) => k.name).map((k) => k.name))];
-    html += named.map((n) => `<span class="lg"><span class="dot" style="background:${KIND_COLOR.item}"></span><span class="n">${esc(n)}</span></span>`).join('');
+    html += named.map((n) => `<span class="lg">${dot('item')}<span class="n">${esc(n)}</span></span>`).join('');
     if (m.available && !kinds.length) html += `<span class="lg"><span class="n">${T.allFound}</span></span>`;
     $('legend').innerHTML = html;
   }
@@ -608,7 +650,14 @@
     }
     for (const mk of m.markers || []) {
       const [x, y] = toScreen(...sp.px(mk.x, mk.z));
-      if (x < -10 || y < -10 || x > MAP_W + 10 || y > MAP_H + 10) continue;
+      if (x < -14 || y < -14 || x > MAP_W + 14 || y > MAP_H + 14) continue;
+      const icon = markerIcon(mk.k);
+      if (icon) {
+        g.shadowColor = 'rgba(0,0,0,.8)'; g.shadowBlur = 3;
+        g.drawImage(icon, x - 12, y - 12, 24, 24);
+        g.shadowBlur = 0;
+        continue;
+      }
       g.fillStyle = KIND_COLOR[mk.k] || '#b0b0b0';
       g.strokeStyle = 'rgba(0,0,0,0.85)'; g.lineWidth = 2;
       g.beginPath();
@@ -843,10 +892,11 @@
       const rows = foes.slice(0, 6).map((e, i) => {
         const pct = e.maxHp > 0 ? Math.max(0, Math.min(100, (100 * e.hp) / e.maxHp)) : 0;
         return `<button class="foe ${e.hp <= 0 ? 'dead' : ''} ${e.acting ? 'acting' : ''} ${e.type >= 10000 ? 'boss' : ''}" data-foe="${i}">
-          <span class="n">${e.acting ? '<i class="cursor"></i>' : ''}${esc(labels[i])}</span>
+          <span class="fic">${foeImg(e.type, 'foeart')}</span><span class="n">${e.acting ? '<i class="cursor"></i>' : ''}${esc(labels[i])}</span>
           <span class="barbg"><i class="${pct < 25 ? 'danger' : ''}" style="width:${pct}%;background-image:url(${url(ART.bar)});background-position:0 ${pct < 25 ? '100%' : '0'}"></i></span>
           <span class="hpv num">${num(e.hp)} / ${num(e.maxHp)}</span><span class="more">›</span></button>`;
       }).join('');
+      $('enemies').classList.toggle('few', foes.length <= 3);
       $('enemies').innerHTML = `<div class="head">${T.enemies} · <span class="num">${fmt(T.alive, { n: foes.filter((e) => e.hp > 0).length })}</span></div>${rows}`;
     }
     const actor = (state.party || []).find((c) => c.acting);
@@ -895,8 +945,8 @@
     const label = foeLabels(foes)[i];
     const pct = e.maxHp > 0 ? Math.round((100 * e.hp) / e.maxHp) : 0;
     const taken = hits.filter((h) => h.t === label && h.kind === 'dmg').reduce((s, h) => s + h.v, 0);
-    openSheet(`<div class="sh-title">${esc(label)}</div>
-      <div class="sh-sub">${fmt(T.sheetEnemy, { id: e.type })}</div>
+    openSheet(`<div class="sh-foe">${foeImg(e.type, 'sh-art')}<div><div class="sh-title">${esc(label)}</div>
+      <div class="sh-sub">${fmt(T.sheetEnemy, { id: e.type })}</div></div></div>
       <div class="sh-grid"><div><small>${T.hp}</small><b class="num">${num(e.hp)} / ${num(e.maxHp)}</b></div>
         <div><small>%</small><b class="num">${pct} %</b></div>
         <div><small>${T.hits}</small><b class="num">${num(taken)}</b></div></div>
@@ -988,7 +1038,8 @@
   // the settings are open (one bridge call a second, nothing otherwise).
   let perfTimer = 0;
   function readPerf() {
-    if (!bridge || !bridge.perf) return null;
+    if (!bridge) return { fps: 30, battery: 76, charging: false, temp: 27, mode: 1, cap: 30, thermal: 0 }; // desktop preview
+    if (!bridge.perf) return null;
     try { return JSON.parse(bridge.perf() || 'null'); } catch (e) { return null; }
   }
   function showPerf() {
@@ -1108,6 +1159,23 @@
   applyBright();
   probeArt();
   poll();
+  // The header's fps and battery: one cheap bridge call a second, none while asleep or hidden.
+  function headerPerf() {
+    if (sleeping || document.hidden) return;
+    const p = readPerf();
+    const box = $('hdrPerf');
+    if (!p) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    $('hdrFps').textContent = p.fps > 0 ? String(p.fps) : '–';
+    const lvl = p.battery >= 0 ? p.battery : null;
+    $('hdrBat').textContent = lvl != null ? lvl + '%' : '';
+    const bat = $('hdrBatIcon');
+    bat.style.setProperty('--lvl', (lvl != null ? lvl : 0) + '%');
+    bat.classList.toggle('low', lvl != null && lvl <= 15 && !p.charging);
+    bat.classList.toggle('chg', !!p.charging);
+    box.title = p.temp > 0 ? p.temp.toFixed(1) + ' °C' : '';
+  }
+  setInterval(headerPerf, 1000);
   setInterval(poll, 200);
   setInterval(restCheck, 15000);
   requestAnimationFrame(mapFrame);

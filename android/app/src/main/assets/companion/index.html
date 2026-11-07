@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>re:Blue · Dual Screen</title>
-<link rel="stylesheet" href="companion.css?v=3">
+<link rel="stylesheet" href="companion.css?v=4">
 </head>
 <body>
 <!-- Laid out in the camp menu's own units (its 1280x720 canvas) and scaled to the screen.
@@ -14,6 +14,7 @@
   <div id="app">
     <header id="top">
       <div class="win place"><span id="location">Blue Dragon</span><span id="mode" class="mode"></span></div>
+      <div id="hdrPerf" class="win perf hidden"><span class="fpsv num" id="hdrFps"></span><span class="fpsl">fps</span><i id="hdrBatIcon" class="bat"></i><span class="num" id="hdrBat"></span></div>
       <div class="win gold"><i class="spr hdr-gold"></i><span class="txt-gold">Oro</span><span id="gold" class="num"></span></div>
       <button id="sleepBtn" class="win tool" aria-label="sleep">☾</button>
       <button id="settingsBtn" class="win tool" aria-label="settings">⚙</button>
@@ -121,6 +122,6 @@
   </div>
 </div>
 
-<script src="companion.js?v=5"></script>
+<script src="companion.js?v=6"></script>
 </body>
 </html>
