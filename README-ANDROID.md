@@ -116,6 +116,18 @@ Lo que hay que comprobar en la consola la primera vez:
 
 El código está en `reblue/src/platform/android_companion.cpp` (lee el estado en el hilo del juego cada pocos fotogramas, solo mientras el panel lo pide, y copia la textura del minimapa cuando cambia de piso), `reblue/src/platform/android_companion_tex.cpp` (pasa texturas de Xbox 360 a PNG), `android/.../DualScreenCompanion.java` (la ventana de la segunda pantalla) y `android/app/src/main/assets/companion/` (el panel). Sin el juego, el panel usa datos de ejemplo (`?mode=field`, `?mode=battle`, `?mode=title`) y, si no encuentra los gráficos, dibuja ventanas sencillas.
 
+## Cómo se traduce el código del juego
+
+El código PowerPC de la Xbox 360 se traduce a C++ (`rexglue codegen`) y el NDK lo compila a ARM64. En Android hay tres ajustes sobre ese código que lo hacen más ligero, sobre todo en móviles con núcleos pequeños (Cortex-A53/A55):
+
+- **Llamadas directas entre funciones del juego.** `libreblue.so` es una librería compartida y las ~17 000 funciones traducidas eran símbolos públicos, así que cada llamada de una a otra pasaba por la PLT: leer la dirección de una tabla y hacer un salto indirecto. Ahora son ocultas y cada llamada es un `bl` directo. Las llamadas por la PLT pasaron de 170 573 a 75 517 (las que quedan son sobre todo de registro de errores, que casi nunca se ejecutan) y los símbolos dinámicos de 42 519 a 4 943, así que la librería también carga antes.
+- **Vectores (VMX) sin tablas modificables.** Cada `lvx`/`stvx` da la vuelta a los bytes con una tabla (`VectorMaskL`). Como era una variable modificable, el compilador tenía que leer su dirección de la GOT, cargarla y aplicarle una máscara en cada uso. Ahora es constante y queda en una sola carga desde el propio código: tres instrucciones menos y una lectura dependiente menos por acceso vectorial (cerca de 65 000 sitios).
+- **Sin protector de pila ni marco por función** en el código traducido: no tiene búferes que proteger y el desenrollado usa `.eh_frame`. Las funciones con marco pasaron de 18 955 a 8 108.
+
+En total, el código máquina (`.text`) bajó de 20,6 MB a 19,75 MB (−4 %, mejor para la caché de instrucciones) y el APK de 40 a 35 MB. Se sigue compilando para `armv8-a` básico, así que funciona en cualquier ARM64.
+
+Para comparar dos compilaciones: `bash scripts/compare_libs.sh antes.so despues.so`.
+
 ## Si algo falla
 
 ```bash
