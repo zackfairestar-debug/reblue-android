@@ -9,10 +9,10 @@ Port de [re:Blue](https://github.com/zolaware/reblue) (Blue Dragon recompilado) 
 | Parte | Estado |
 |---|---|
 | SDK ReXGlue para Android arm64 | Compila e instala (`librexruntime.so`) |
-| re:Blue para Android | 204 de 214 archivos compilan; los 10 que faltan solo necesitan el código generado desde tu `default.xex` |
+| re:Blue para Android | Compila entero con el código generado desde tu `default.xex` |
 | Herramientas del PC (codegen, XenosRecomp, dxc) | Compiladas y probadas |
-| Proyecto Android (Gradle/APK) | Compila |
-| Probado en un móvil | **Todavía no** |
+| Proyecto Android (Gradle/APK) | Compila; versiones publicadas en Releases |
+| Probado en un dispositivo | Sí: AYN Thor (Snapdragon 8 Gen 2), con las dos pantallas |
 
 ## Descargar el código
 
