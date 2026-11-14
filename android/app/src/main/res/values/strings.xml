@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">re:Blue</string>
+    <string name="gpu_driver_title">Driver GPU</string>
 </resources>

@@ -27,6 +27,12 @@ if (-not $JavaOnly) {
         }
         Copy-Item $lib $jni -Force
     }
+    # libadrenotools' hook libraries (custom Vulkan driver loading), when the
+    # build has them. They must end up in nativeLibraryDir.
+    $hooks = Join-Path $RB_ROOT "build\reblue-android-$($Config.ToLower())\adrenotools\src\hook"
+    if (Test-Path $hooks) {
+        Get-ChildItem $hooks -Filter 'lib*.so' | Copy-Item -Destination $jni -Force
+    }
 }
 
 $task = if ($Config -eq 'Debug') { 'assembleDebug' } else { 'assembleRelease' }

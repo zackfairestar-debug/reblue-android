@@ -26,6 +26,9 @@
 
     <!-- Controller rumble. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- GPU driver page: lists and downloads Turnip driver packages from
+         GitHub releases, only when asked to. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="@string/app_name"
@@ -33,7 +36,7 @@
         android:allowBackup="false"
         android:theme="@style/AppTheme"
         android:enableOnBackInvokedCallback="false"
-        android:extractNativeLibs="false"
+        android:extractNativeLibs="true"
         android:isGame="true"
         android:appCategory="game"
         android:hardwareAccelerated="true"
@@ -55,7 +58,23 @@
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
             </intent-filter>
+            <!-- Long-press the icon: "Driver GPU". -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- Picks the Vulkan driver: the system one or a Turnip package.
+             Its own process, so it can close a running game to apply one. -->
+        <activity
+            android:name=".GpuDriverActivity"
+            android:label="@string/gpu_driver_title"
+            android:process=":gpu"
+            android:theme="@android:style/Theme.DeviceDefault"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:excludeFromRecents="true"
+            android:exported="true" />
 
         <!-- Lives in its own process so it outlasts the game process it
              restarts (settings that need a relaunch). -->

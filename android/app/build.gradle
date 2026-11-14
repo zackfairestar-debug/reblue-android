@@ -45,9 +45,11 @@ android {
 
     packaging {
         jniLibs {
-            // Stored uncompressed and page aligned, so the recompiled game
-            // (hundreds of MB) is mapped straight from the APK.
-            useLegacyPackaging = false
+            // Extracted to nativeLibraryDir at install: libadrenotools loads
+            // its hook libraries from there to swap in a custom Vulkan driver
+            // (Turnip), and cannot read them out of the APK. Costs the
+            // libraries' size once more on disk, nothing at run time.
+            useLegacyPackaging = true
         }
     }
 

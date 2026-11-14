@@ -97,6 +97,14 @@ Además, sin tocar nada:
 
 En el log, la línea `[perf]` dice el estado térmico y si el ahorro está actuando (`power auto, capped 30`).
 
+Los hilos del juego (guest, render, GPU y audio) corren solo en los núcleos rápidos; en el Thor, los núcleos 3 a 7, dejando los tres A510. `bd_performance_cores = false` en `reblue.toml` lo desactiva.
+
+## Driver GPU (Turnip)
+
+Mantén pulsado el icono de re:Blue → **Driver GPU**. Ahí puedes descargar un driver Turnip (Mesa) de las mismas fuentes que usan los emuladores, instalar un `.zip` que ya tengas, o volver al **Driver del sistema (Qualcomm)**. Se aplica al abrir el juego; si está abierto, **Abrir el juego** lo cierra (sin guardar) y lo vuelve a abrir.
+
+En el Thor, en la pantalla de título, la GPU tardaba 4,8 ms por fotograma con el driver de Qualcomm, 2,7 ms con **Turnip T30 de Mr. Purple** y 4,8 ms con KIMCHI R8: cada versión es distinta, compáralas con la línea `[perf]` (`gpu busy`). Si un driver no llega a arrancar el juego, el siguiente arranque vuelve solo al de Qualcomm. El log dice qué driver se cargó (`[gpu] custom driver ...` y `GPU caps: ... on ...`).
+
 ## Segunda pantalla (AYN Thor y consolas de doble pantalla)
 
 Si la consola tiene una segunda pantalla, re:Blue abre en ella un panel táctil en vivo con el aspecto del menú del campamento del juego. Los gráficos son los del propio juego: ventanas, cursor, caras, barras de PS/PM, iconos de clase y de estado, la flecha del mapa… Se leen en el móvil de tu juego instalado, así que el APK no lleva arte del juego. Los textos en español son los del juego («Estado», «Sombra», «Maestro de espada», «PS», «NV», «RG», «PH», «Oro»…).

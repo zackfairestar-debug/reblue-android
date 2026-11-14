@@ -8,6 +8,7 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Process;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import org.libsdl.app.SDLActivity;
 
@@ -66,7 +67,16 @@ public class ReblueActivity extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Before super.onCreate loads the game library: the chosen Vulkan
+        // driver travels in the environment (platform/android_gpu_driver.cpp).
+        String dropped = GpuDrivers.prepareLaunch(this);
         super.onCreate(savedInstanceState);
+        if (dropped != null) {
+            Toast.makeText(this, "El driver " + dropped
+                    + " no llegó a arrancar el juego la última vez; vuelve el driver del sistema."
+                    + " Puedes cambiarlo en Driver GPU (mantén pulsado el icono).",
+                    Toast.LENGTH_LONG).show();
+        }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         companion = new DualScreenCompanion(this);
     }
