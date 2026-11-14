@@ -29,7 +29,7 @@
       optScene: 'Mostrar la vista de escena durante las escenas',
       optRest: 'Reposo (pantalla negra con reloj) tras un rato sin tocar, fuera de combate',
       optRestMin: 'Minutos hasta el reposo', optBright: 'Brillo del panel',
-      optClear: 'Borrar el recorrido del mapa y el diario', clear: 'Borrar', confirmClear: '¿Borrar el recorrido y el diario?',
+      optClear: 'Borrar el diario', clear: 'Borrar', cancel: 'Cancelar', confirmClear: '¿Borrar el diario?',
       disable: 'Apagar panel', close: 'Cerrar', wake: 'Toca para volver',
       waitingBoot: 'Esperando al juego…', waitingTitle: 'Pantalla de título · carga una partida',
       modes: { field: '', battle: 'Combate', menu: 'Menú', event: 'Escena', title: 'Título', loading: 'Cargando…', boot: '' },
@@ -72,7 +72,7 @@
       optScene: 'Show the scene view during scenes',
       optRest: 'Rest (black screen with a clock) after a while untouched, outside battle',
       optRestMin: 'Minutes until rest', optBright: 'Panel brightness',
-      optClear: 'Clear the map trail and the journal', clear: 'Clear', confirmClear: 'Clear the trail and the journal?',
+      optClear: 'Clear the journal', clear: 'Clear', cancel: 'Cancel', confirmClear: 'Clear the journal?',
       disable: 'Turn panel off', close: 'Close', wake: 'Tap to return',
       waitingBoot: 'Waiting for the game…', waitingTitle: 'Title screen · load a save',
       modes: { field: '', battle: 'Battle', menu: 'Menu', event: 'Scene', title: 'Title', loading: 'Loading…', boot: '' },
@@ -240,6 +240,79 @@
     document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = T[el.dataset.i18n] || ''; });
     document.querySelector('.txt-gold').textContent = T.gold;
     sig = {};
+    refreshPickers();
+  }
+
+  // ---------------------------------------------------------------- in-page pickers and confirm
+  // The panel lives in an Android Presentation. A <select> list or a confirm()
+  // opens a dialog window of its own, which WindowManager refuses in that
+  // context, and the exception takes the whole game down. So each <select> is
+  // shown as a button with a menu drawn in the page, and confirms are too.
+  const pickers = [];
+  function refreshPickers() {
+    for (const { sel, btn } of pickers) {
+      const o = sel.options[sel.selectedIndex];
+      btn.textContent = o ? o.textContent : '';
+      btn.disabled = sel.disabled;
+    }
+  }
+  function overlay(build) {
+    const back = document.createElement('div');
+    back.className = 'popmenu-back';
+    const box = document.createElement('div');
+    box.className = 'popmenu win';
+    back.appendChild(box);
+    const close = () => back.remove();
+    back.addEventListener('click', (e) => { if (e.target === back) close(); });
+    build(box, close);
+    document.body.appendChild(back);
+    return close;
+  }
+  function openPicker(sel) {
+    overlay((box, close) => {
+      Array.from(sel.options).forEach((o, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'popmenu-item' + (i === sel.selectedIndex ? ' on' : '');
+        b.textContent = o.textContent;
+        b.addEventListener('click', () => {
+          close();
+          if (i === sel.selectedIndex) return;
+          sel.selectedIndex = i;
+          refreshPickers();
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        box.appendChild(b);
+      });
+    });
+  }
+  document.querySelectorAll('select').forEach((sel) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'picker';
+    sel.style.display = 'none';
+    sel.after(btn);
+    btn.addEventListener('click', () => { if (typeof haptic === 'function') haptic(); openPicker(sel); });
+    pickers.push({ sel, btn });
+  });
+  function askConfirm(text, onYes) {
+    overlay((box, close) => {
+      const p = document.createElement('p');
+      p.className = 'popmenu-text';
+      p.textContent = text;
+      box.appendChild(p);
+      const row = document.createElement('div');
+      row.className = 'modal-actions';
+      for (const [label, yes] of [[T.cancel, false], [T.clear, true]]) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'win btn';
+        b.textContent = label;
+        b.addEventListener('click', () => { close(); if (yes) onYes(); });
+        row.appendChild(b);
+      }
+      box.appendChild(row);
+    });
   }
 
   // ---------------------------------------------------------------- fit the camp canvas to the screen
@@ -579,27 +652,13 @@
     return live;
   }
 
-  // Path walked, per stage, kept on the device.
-  const trails = JSON.parse(localStorage.getItem('bd-trails') || '{}');
-  let trailDirty = 0;
-  function recordTrail(stage, p, step) {
-    if (!stage || !p) return;
-    const t = trails[stage] || (trails[stage] = []);
-    const last = t[t.length - 1];
-    if (!last || Math.hypot(last[0] - p.x, last[1] - p.z) > step) {
-      t.push([Math.round(p.x * 10) / 10, Math.round(p.z * 10) / 10]);
-      if (t.length > 3000) t.splice(0, t.length - 3000);
-      if (++trailDirty > 12) saveTrails();
-    }
-  }
-  function saveTrails() {
-    trailDirty = 0;
-    try { localStorage.setItem('bd-trails', JSON.stringify(trails)); } catch (e) { /* full: keep in memory */ }
-  }
+  // Older builds drew the path walked on the map; drop what they stored.
+  localStorage.removeItem('bd-trails');
+  localStorage.removeItem('bd-steps');
 
   // Only the map view animates. Everywhere else (another tab, the panel asleep
-  // or hidden) the loop drops to a slow timer that walks the trail from the
-  // 200 ms snapshot and never calls into the game, so the native side can stop
+  // or hidden) the loop drops to a slow timer that never calls into the
+  // game, so the native side can stop
   // sampling and the WebView stops drawing; on the map a frame whose picture
   // would not change is skipped.
   let lastDrawKey = '';
@@ -609,20 +668,14 @@
     if (!onMap) {
       lastDrawKey = '';
       setTimeout(mapFrame, 250);
-      if (m.available && !sleeping && !document.hidden) {
-        const sp = mapSpace(m);
-        const worldPerPx = 1 / Math.max(1e-6, sp.unit);
-        recordTrail(state.stage, stepLive({ x: m.x, z: m.z, yaw: m.yaw || 0 }, worldPerPx * 120), worldPerPx * 6);
-      }
       return;
     }
     requestAnimationFrame(mapFrame);
     if (!m.available) { if (lastDrawKey !== 'clear') { clearMap(); lastDrawKey = 'clear'; } return; }
     const sp = mapSpace(m);
-    // Snapshot units per map pixel decide what counts as a step and a teleport.
+    // Snapshot units per map pixel decide what counts as a teleport.
     const worldPerPx = 1 / Math.max(1e-6, sp.unit);
     const p = stepLive(readLive() || { x: m.x, z: m.z, yaw: m.yaw || 0 }, worldPerPx * 120);
-    recordTrail(state.stage, p, worldPerPx * 6);
     const key = [lastSerial, state.stage, p.x.toFixed(1), p.z.toFixed(1), p.yaw.toFixed(3), mapState.follow, mapState.free,
       mapState.cu, mapState.cv, settings.zoom, scale, window.devicePixelRatio, sp.img ? sp.img.complete && sp.img.naturalWidth : 0,
       // the glints: at most 8 redraws a second while standing still
@@ -671,20 +724,6 @@
       g.imageSmoothingQuality = 'high';
       g.drawImage(sp.img, 0, 0);
       g.restore();
-    }
-    // walked path: dark edge, light dotted line
-    const t = trails[state.stage] || [];
-    if (t.length > 1) {
-      const jump = (1 / Math.max(1e-6, sp.unit)) * 120;
-      g.lineCap = 'round'; g.lineJoin = 'round';
-      g.beginPath();
-      t.forEach((q, i) => {
-        const [x, y] = toScreen(...sp.px(q[0], q[1]));
-        if (!i || Math.hypot(q[0] - t[i - 1][0], q[1] - t[i - 1][1]) > jump) g.moveTo(x, y); else g.lineTo(x, y);
-      });
-      g.setLineDash([]); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 6; g.stroke();
-      g.setLineDash([3, 8]); g.strokeStyle = 'rgba(190,225,255,.95)'; g.lineWidth = 3; g.stroke();
-      g.setLineDash([]);
     }
     const now = performance.now();
     for (const mk of m.markers || []) {
@@ -1073,6 +1112,7 @@
     }
     $('optRestOut').textContent = settings.restMin + ' min';
     $('optBrightOut').textContent = settings.bright + ' %';
+    refreshPickers();
   }
   // The game's power-saving mode and how the console is doing, live while
   // the settings are open (one bridge call a second, nothing otherwise).
@@ -1085,8 +1125,8 @@
   function showPerf() {
     const p = readPerf();
     const el = $('perfStatus');
-    if (!p) { el.textContent = ''; $('optPower').disabled = !bridge || !bridge.setPower; return; }
-    if (document.activeElement !== $('optPower')) $('optPower').value = String(p.mode);
+    if (!p) { el.textContent = ''; $('optPower').disabled = !bridge || !bridge.setPower; refreshPickers(); return; }
+    if ($('optPower').value !== String(p.mode)) { $('optPower').value = String(p.mode); refreshPickers(); }
     const parts = [];
     if (p.fps > 0) {
       let f = p.fps + ' ' + T.perfFps;
@@ -1127,16 +1167,14 @@
     });
   }
   $('optClear').addEventListener('click', () => {
-    if (!confirm(T.confirmClear)) return;
-    for (const k in trails) delete trails[k];
-    localStorage.removeItem('bd-trails');
-    journal = []; localStorage.removeItem(JOURNAL_KEY);
-    sig = {}; render();
+    askConfirm(T.confirmClear, () => {
+      journal = []; localStorage.removeItem(JOURNAL_KEY);
+      sig = {}; render();
+    });
   });
   $('closeSettings').addEventListener('click', () => { haptic(); closeSettings(); });
   $('disableBtn').addEventListener('click', () => { if (bridge && bridge.disable) bridge.disable(); });
   window.addEventListener('resize', () => { fit(); sig = {}; render(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) saveTrails(); });
 
   // ---------------------------------------------------------------- sample data (desktop preview)
   const Mock = {

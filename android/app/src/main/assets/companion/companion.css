@@ -286,7 +286,14 @@ body:not(.art) .barbg.big > i { background: linear-gradient(#fff, #999); }
 .modal-title { font-size: 26px; margin-bottom: 10px; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 12px 0; font-size: 20px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
 .row input[type=checkbox] { width: 26px; height: 26px; accent-color: #9290a0; }
-.row select { font-size: 19px; background: #2a2838; color: #fff; border: 1px solid #77768a; padding: 4px 8px; }
+.row select, .picker { font-size: 19px; background: #2a2838; color: #fff; border: 1px solid #77768a; padding: 4px 30px 4px 10px; font-family: inherit; text-align: left; }
+.picker { position: relative; min-width: 150px; }
+.picker::after { content: "▾"; position: absolute; right: 10px; top: 50%; transform: translateY(-52%); color: var(--ink2); }
+.popmenu-back { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); display: grid; place-items: center; z-index: 25; }
+.popmenu { background: #1e1d2c; border: 1px solid #77768a; border-radius: 9px; min-width: 300px; max-width: 80vw; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+.popmenu-item { font: inherit; font-size: 21px; color: var(--ink); background: transparent; border: 0; padding: 12px 18px; text-align: left; text-shadow: var(--shadow); }
+.popmenu-item.on { background: rgba(255, 255, 255, .14); }
+.popmenu-text { font-size: 20px; padding: 8px 8px 4px; }
 .hint { color: var(--ink2); font-size: 15px; }
 .modal-actions { display: flex; justify-content: space-between; margin-top: 14px; }
 .btn { padding: 12px 22px; font-size: 19px; }
